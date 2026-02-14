@@ -50,7 +50,7 @@ export const STAGES: Stage[] = [
   },
   {
     id: 4,
-    question: "Okay be honest… are you smiling right now? 🙂",
+    question: "Okay be honest… are you smiling right now? 😉",
     options: [
       { label: "Maybeee �", value: "maybe" },
       { label: "Yes 😭", value: "yes_smile" },

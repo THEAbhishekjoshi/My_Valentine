@@ -26,7 +26,20 @@ export default function ValentinePage() {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const successAudioRef = useRef<HTMLAudioElement | null>(null);
 
-    // Toggle music play/pause - simple version for HTML audio element
+    // Start music on first interaction to bypass browser policies
+    useEffect(() => {
+        const startAudio = () => {
+            if (audioRef.current && !isMusicPlaying && !isSuccess) {
+                audioRef.current.play()
+                    .then(() => setIsMusicPlaying(true))
+                    .catch(() => { });
+            }
+        };
+        window.addEventListener('click', startAudio);
+        return () => window.removeEventListener('click', startAudio);
+    }, [isMusicPlaying, isSuccess]);
+
+    // Toggle music play/pause
     const toggleMusic = () => {
         const audio = audioRef.current;
         if (!audio) return;
@@ -36,12 +49,8 @@ export default function ValentinePage() {
             setIsMusicPlaying(false);
         } else {
             audio.play()
-                .then(() => {
-                    setIsMusicPlaying(true);
-                })
-                .catch(error => {
-                    console.error('Playback error:', error);
-                });
+                .then(() => setIsMusicPlaying(true))
+                .catch(error => console.error('Playback error:', error));
         }
     };
 
@@ -144,11 +153,12 @@ export default function ValentinePage() {
             setIsSuccess(true);
             setPlayfulResponse(false);
 
-            // Stop background music and play success music
+            // Stop piano music and play success music
             if (audioRef.current) {
                 audioRef.current.pause();
                 setIsMusicPlaying(false);
             }
+
             if (successAudioRef.current) {
                 // Start from 25 seconds
                 successAudioRef.current.currentTime = 25;
@@ -204,6 +214,13 @@ export default function ValentinePage() {
                     onComplete={(userJson) => {
                         const userData = JSON.parse(userJson);
                         setUser(userData);
+
+                        // Start music automatically after user interaction (clicking Start Journey)
+                        if (audioRef.current) {
+                            audioRef.current.play()
+                                .then(() => setIsMusicPlaying(true))
+                                .catch(e => console.log("Autoplay blocked, waiting for manual toggle"));
+                        }
                     }}
                 />
             )}
@@ -379,13 +396,36 @@ export default function ValentinePage() {
 
             {/* Success Screen */}
             {isSuccess && (
-                <div className="fixed inset-0 z-100 flex flex-col items-center justify-center bg-linear-to-br from-pink-400 to-rose-400 text-white text-center animate-in fade-in slide-in-from-bottom duration-1000">
-                    <div className="text-9xl mb-8 animate-bounce">💖</div>
-                    <h1 className="text-7xl font-black mb-4 drop-shadow-lg">YES!</h1>
-                    <p className="text-2xl font-medium max-w-md px-6 drop-shadow-md">
-                        You've made me the happiest person in the digital world! Happy Valentine's Day! ✨
+                <div className="fixed inset-0 z-100 flex flex-col items-center justify-center bg-linear-to-br from-pink-400 to-rose-400 text-white text-center animate-in fade-in slide-in-from-bottom duration-1000 p-4">
+                    <div className="text-6xl md:text-8xl mb-4 md:mb-6 animate-bounce">💖</div>
+
+                    <div className="flex flex-col items-center mb-4 md:mb-6">
+                        <h1 className="text-4xl md:text-7xl font-black drop-shadow-lg tracking-tighter">YES!</h1>
+                        <div className="text-4xl md:text-7xl animate-pulse mt-1">💕</div>
+                    </div>
+
+                    <div className="max-w-xl space-y-1 mb-6">
+                        <p className="text-base md:text-2xl font-medium drop-shadow-md leading-tight">
+                            And Just Like That This Became My Favorite Ending
+                        </p>
+                        <p className="text-xl md:text-4xl font-black drop-shadow-md tracking-wide uppercase">
+                            Happy Valentine’s Day!
+                        </p>
+                    </div>
+
+                    <p className="text-sm md:text-lg font-bold opacity-90 animate-pulse bg-white/20 px-4 py-1 rounded-full backdrop-blur-sm mb-6">
+                        Psst… send me a screenshot? 😄
                     </p>
-                    <div className="mt-12 flex gap-4">
+
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="relative z-50 px-8 py-3 bg-white text-pink-500 rounded-full hover:bg-pink-50 transition-all font-black text-xl shadow-2xl hover:scale-105 active:scale-95 transition-transform"
+                    >
+                        Play Again ✨
+                    </button>
+
+                    {/* Floating Hearts/Particles Layer - Absolute to not affect layout */}
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden">
                         {Array.from({ length: 30 }).map((_, i) => (
                             <div
                                 key={i}
@@ -394,19 +434,13 @@ export default function ValentinePage() {
                                     left: `${Math.random() * 100}%`,
                                     top: `${Math.random() * 100}%`,
                                     animationDelay: `${Math.random() * 4}s`,
-                                    opacity: 0.8
+                                    opacity: 0.6
                                 }}
                             >
                                 {['❤️', '💖', '✨', '🌸', '🍭', '🫂'][Math.floor(Math.random() * 6)]}
                             </div>
                         ))}
                     </div>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="mt-12 px-8 py-3 bg-white text-pink-500 rounded-full hover:bg-pink-50 transition-all font-black text-xl shadow-xl"
-                    >
-                        Play Again
-                    </button>
                 </div>
             )}
 
